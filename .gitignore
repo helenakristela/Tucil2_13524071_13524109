@@ -1,4 +1,5 @@
-obj/
+src/bin/
+src/obj/
 .vs/
 .vscode/
 *.user
