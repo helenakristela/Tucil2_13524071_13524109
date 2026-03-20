@@ -1,0 +1,97 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        if (args.Length < 2)
+        {
+            Console.WriteLine("Usage: dotnet run -- <input.obj> <maxDepth>");
+            return;
+        }
+
+        string inputPath = args[0];
+
+        if (!int.TryParse(args[1], out int maxDepth) || maxDepth < 0)
+        {
+            Console.WriteLine("Error: maxDepth harus bilangan bulat >= 0.");
+            return;
+        }
+
+        try
+        {
+            List<Triangle> triangles = ObjParser.Parse(inputPath);
+
+            Console.WriteLine($"File       : {inputPath}");
+            Console.WriteLine($"Max Depth  : {maxDepth}");
+            Console.WriteLine($"Triangles  : {triangles.Count}");
+
+            if (triangles.Count == 0)
+            {
+                Console.WriteLine("Tidak ada triangle valid dari file .obj.");
+                return;
+            }
+
+            Cube rootCube = BuildRootCube(triangles);
+
+            Console.WriteLine($"Root Cube  : {rootCube}");
+
+            OctreeNode root = new OctreeNode(rootCube, 0);
+            root.BuildToDepth(maxDepth);
+
+            Console.WriteLine($"Total Nodes: {root.CountNodes()}");
+            Console.WriteLine($"Leaf Nodes : {root.CountLeaves()}");
+
+            Console.WriteLine("Nodes per depth:");
+            Dictionary<int, int> stats = root.CountNodesPerDepth();
+            foreach (var kvp in stats.OrderBy(x => x.Key))
+            {
+                Console.WriteLine($"Depth {kvp.Key}: {kvp.Value}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+        }
+    }
+
+    private static Cube BuildRootCube(List<Triangle> triangles)
+    {
+        Vector3 globalMin = triangles[0].GetBoundingBox().min;
+        Vector3 globalMax = triangles[0].GetBoundingBox().max;
+
+        foreach (Triangle triangle in triangles)
+        {
+            var (min, max) = triangle.GetBoundingBox();
+
+            globalMin = new Vector3(
+                MathF.Min(globalMin.X, min.X),
+                MathF.Min(globalMin.Y, min.Y),
+                MathF.Min(globalMin.Z, min.Z)
+            );
+
+            globalMax = new Vector3(
+                MathF.Max(globalMax.X, max.X),
+                MathF.Max(globalMax.Y, max.Y),
+                MathF.Max(globalMax.Z, max.Z)
+            );
+        }
+
+        float sizeX = globalMax.X - globalMin.X;
+        float sizeY = globalMax.Y - globalMin.Y;
+        float sizeZ = globalMax.Z - globalMin.Z;
+        float maxSize = MathF.Max(sizeX, MathF.Max(sizeY, sizeZ));
+
+        Vector3 center = new Vector3(
+            (globalMin.X + globalMax.X) / 2f,
+            (globalMin.Y + globalMax.Y) / 2f,
+            (globalMin.Z + globalMax.Z) / 2f
+        );
+
+        Vector3 half = new Vector3(maxSize / 2f, maxSize / 2f, maxSize / 2f);
+
+        return new Cube(center - half, center + half);
+    }
+}
