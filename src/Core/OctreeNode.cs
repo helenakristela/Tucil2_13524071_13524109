@@ -6,6 +6,8 @@ public class OctreeNode
     public int Depth { get; }
     public OctreeNode[]? Children { get; private set; }
 
+    public List<Triangle> Triangles { get; set; }
+
     public bool IsLeaf => Children == null;
 
     public OctreeNode(Cube bounds, int depth)
@@ -13,6 +15,8 @@ public class OctreeNode
         Bounds = bounds;
         Depth = depth;
         Children = null;
+
+        Triangles = new List<Triangle>();
     }
 
     public void Split()
@@ -40,6 +44,11 @@ public class OctreeNode
         {
             child.BuildToDepth(maxDepth);
         }
+    }
+
+    public bool ShouldSplit(int maxDepth, int minTriangles = 1)
+    {
+        return Depth < maxDepth && Triangles.Count > minTriangles;
     }
 
     public int CountNodes()

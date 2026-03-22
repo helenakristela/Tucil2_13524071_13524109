@@ -39,7 +39,10 @@ public class Program
             Console.WriteLine($"Root Cube  : {rootCube}");
 
             OctreeNode root = new OctreeNode(rootCube, 0);
-            root.BuildToDepth(maxDepth);
+
+            Voxelizer.Build(root, triangles, maxDepth);
+
+            Console.WriteLine($"Root Triangles: {root.Triangles.Count}");
 
             Console.WriteLine($"Total Nodes: {root.CountNodes()}");
             Console.WriteLine($"Leaf Nodes : {root.CountLeaves()}");
