@@ -35,21 +35,36 @@ public class Program
             }
 
             Cube rootCube = BuildRootCube(triangles);
-
             Console.WriteLine($"Root Cube  : {rootCube}");
 
             OctreeNode root = new OctreeNode(rootCube, 0);
 
             Voxelizer.Build(root, triangles, maxDepth);
 
-            Console.WriteLine($"Root Triangles: {root.Triangles.Count}");
+            List<Cube> voxels = Voxelizer.CollectLeafVoxels(root);
 
-            Console.WriteLine($"Total Nodes: {root.CountNodes()}");
-            Console.WriteLine($"Leaf Nodes : {root.CountLeaves()}");
+            Console.WriteLine();
+            Console.WriteLine($"Root Triangles        : {root.Triangles.Count}");
+            Console.WriteLine($"Total Nodes           : {root.CountNodes()}");
+            Console.WriteLine($"Leaf Nodes            : {root.CountLeaves()}");
+            Console.WriteLine($"Occupied Nodes        : {Statistics.CountOccupiedNodes(root)}");
+            Console.WriteLine($"Occupied Leaf Nodes   : {Statistics.CountOccupiedLeaves(root)}");
+            Console.WriteLine($"Empty Leaf Nodes      : {Statistics.CountEmptyLeaves(root)}");
+            Console.WriteLine($"Max Reached Depth     : {Statistics.GetMaxReachedDepth(root)}");
+            Console.WriteLine($"Voxel Count           : {voxels.Count}");
 
+            Console.WriteLine();
             Console.WriteLine("Nodes per depth:");
             Dictionary<int, int> stats = root.CountNodesPerDepth();
             foreach (var kvp in stats.OrderBy(x => x.Key))
+            {
+                Console.WriteLine($"Depth {kvp.Key}: {kvp.Value}");
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("Occupied leaf nodes per depth:");
+            Dictionary<int, int> occupiedLeafStats = Statistics.CountOccupiedLeavesPerDepth(root);
+            foreach (var kvp in occupiedLeafStats.OrderBy(x => x.Key))
             {
                 Console.WriteLine($"Depth {kvp.Key}: {kvp.Value}");
             }
