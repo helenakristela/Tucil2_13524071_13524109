@@ -8,7 +8,7 @@ public class Program
     {
         if (args.Length < 2)
         {
-            Console.WriteLine("Usage: dotnet run -- <input.obj> <maxDepth>");
+            Console.WriteLine("Usage: dotnet run -- <input.obj> <maxDepth> [output.obj]");
             return;
         }
 
@@ -20,8 +20,13 @@ public class Program
             return;
         }
 
+        string outputPath = args.Length >= 3 ? args[2] : "output.obj";
+
         try
         {
+            Timer timer = new Timer();
+            timer.Start();
+
             List<Triangle> triangles = ObjParser.Parse(inputPath);
 
             Console.WriteLine($"File       : {inputPath}");
@@ -43,7 +48,13 @@ public class Program
 
             List<Cube> voxels = Voxelizer.CollectLeafVoxels(root);
 
+            ObjWriter.Write(outputPath, voxels);
+
+            timer.Stop();
+
             Console.WriteLine();
+            Console.WriteLine("STATISTICS");
+
             Console.WriteLine($"Root Triangles        : {root.Triangles.Count}");
             Console.WriteLine($"Total Nodes           : {root.CountNodes()}");
             Console.WriteLine($"Leaf Nodes            : {root.CountLeaves()}");
@@ -52,9 +63,11 @@ public class Program
             Console.WriteLine($"Empty Leaf Nodes      : {Statistics.CountEmptyLeaves(root)}");
             Console.WriteLine($"Max Reached Depth     : {Statistics.GetMaxReachedDepth(root)}");
             Console.WriteLine($"Voxel Count           : {voxels.Count}");
+            Console.WriteLine($"Occupancy Ratio       : {Statistics.ComputeOccupancyRatio(root):P2}");
 
             Console.WriteLine();
-            Console.WriteLine("Nodes per depth:");
+            Console.WriteLine("NODES PER DEPTH");
+
             Dictionary<int, int> stats = root.CountNodesPerDepth();
             foreach (var kvp in stats.OrderBy(x => x.Key))
             {
@@ -62,12 +75,21 @@ public class Program
             }
 
             Console.WriteLine();
-            Console.WriteLine("Occupied leaf nodes per depth:");
+            Console.WriteLine("OCCUPIED LEAF PER DEPTH");
+
             Dictionary<int, int> occupiedLeafStats = Statistics.CountOccupiedLeavesPerDepth(root);
             foreach (var kvp in occupiedLeafStats.OrderBy(x => x.Key))
             {
                 Console.WriteLine($"Depth {kvp.Key}: {kvp.Value}");
             }
+
+            Console.WriteLine();
+            Console.WriteLine("PERFORMANCE");
+            Console.WriteLine($"Execution Time (ms): {timer.ElapsedMilliseconds()}");
+            Console.WriteLine($"Execution Time (s) : {timer.ElapsedSeconds():F4}");
+
+            Console.WriteLine();
+            Console.WriteLine($"Output OBJ saved to: {outputPath}");
         }
         catch (Exception ex)
         {
@@ -101,6 +123,15 @@ public class Program
         float sizeY = globalMax.Y - globalMin.Y;
         float sizeZ = globalMax.Z - globalMin.Z;
         float maxSize = MathF.Max(sizeX, MathF.Max(sizeY, sizeZ));
+
+        if (maxSize < 1e-6f)
+        {
+            maxSize = 1.0f; 
+        }
+
+        float padding = 1e-4f;
+        globalMin -= new Vector3(padding, padding, padding);
+        globalMax += new Vector3(padding, padding, padding);
 
         Vector3 center = new Vector3(
             (globalMin.X + globalMax.X) / 2f,

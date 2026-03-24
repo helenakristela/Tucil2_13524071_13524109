@@ -101,4 +101,12 @@ public static class Statistics
             }
         }
     }
+    public static float ComputeOccupancyRatio(OctreeNode root)
+    {
+        int occupied = CountOccupiedLeaves(root);
+        int total = root.CountLeaves();
+
+        if (total == 0) return 0;
+        return (float)occupied / total;
+    }
 }

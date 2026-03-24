@@ -2,7 +2,7 @@ using System;
 
 public static class Intersection
 {
-    private const float EPS = 1e-8f;
+    private const float EPS = 1e-6f;
 
     public static bool Intersects(Triangle tri, Cube cube)
     {
@@ -35,21 +35,33 @@ public static class Intersection
         Vector3 e2 = v0 - v2;
 
         Vector3 normal = e0.Cross(e1);
-        float normalLenSq = normal.X * normal.X + normal.Y * normal.Y + normal.Z * normal.Z;
-        if (normalLenSq < EPS)
-            return true;
+        float normalLenSq = normal.Dot(normal);
 
-        if (!TestAxis(e0, v0, v1, v2, h)) return false;
-        if (!TestAxis(e1, v0, v1, v2, h)) return false;
-        if (!TestAxis(e2, v0, v1, v2, h)) return false;
+        if (normalLenSq < EPS)
+        {
+            return PointInCube(tri.V1, cube) ||
+                   PointInCube(tri.V2, cube) ||
+                   PointInCube(tri.V3, cube);
+        }
 
         if (!AxisOverlap(v0.X, v1.X, v2.X, h.X)) return false;
         if (!AxisOverlap(v0.Y, v1.Y, v2.Y, h.Y)) return false;
         if (!AxisOverlap(v0.Z, v1.Z, v2.Z, h.Z)) return false;
 
+        if (!TestAxisCross(e0, v0, v1, v2, h)) return false;
+        if (!TestAxisCross(e1, v0, v1, v2, h)) return false;
+        if (!TestAxisCross(e2, v0, v1, v2, h)) return false;
+
         if (!PlaneBoxOverlap(normal, v0, h)) return false;
 
         return true;
+    }
+
+    private static bool PointInCube(Vector3 p, Cube cube)
+    {
+        return (p.X >= cube.Min.X - EPS && p.X <= cube.Max.X + EPS) &&
+               (p.Y >= cube.Min.Y - EPS && p.Y <= cube.Max.Y + EPS) &&
+               (p.Z >= cube.Min.Z - EPS && p.Z <= cube.Max.Z + EPS);
     }
 
     private static bool AxisOverlap(float v0, float v1, float v2, float h)
@@ -57,12 +69,12 @@ public static class Intersection
         float min = MathF.Min(v0, MathF.Min(v1, v2));
         float max = MathF.Max(v0, MathF.Max(v1, v2));
 
-        return !(min > h || max < -h);
+        return !(min > h + EPS || max < -h - EPS);
     }
 
-    private static bool TestAxis(Vector3 edge, Vector3 v0, Vector3 v1, Vector3 v2, Vector3 h)
+    private static bool TestAxisCross(Vector3 edge, Vector3 v0, Vector3 v1, Vector3 v2, Vector3 h)
     {
-        float lenSq = edge.X * edge.X + edge.Y * edge.Y + edge.Z * edge.Z;
+        float lenSq = edge.Dot(edge);
         if (lenSq < EPS)
             return true;
 
@@ -94,7 +106,7 @@ public static class Intersection
         float min = MathF.Min(p0, MathF.Min(p1, p2));
         float max = MathF.Max(p0, MathF.Max(p1, p2));
 
-        return !(min > r || max < -r);
+        return !(min > r + EPS || max < -r - EPS);
     }
 
     private static bool PlaneBoxOverlap(Vector3 normal, Vector3 vert, Vector3 maxBox)
@@ -114,8 +126,8 @@ public static class Intersection
         float dotMin = normal.Dot(vmin + vert);
         float dotMax = normal.Dot(vmax + vert);
 
-        if (dotMin > 0) return false;
-        if (dotMax >= 0) return true;
+        if (dotMin > EPS) return false;
+        if (dotMax >= -EPS) return true;
 
         return false;
     }

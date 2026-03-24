@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 public class Voxelizer
 {
+    private const int MIN_TRIANGLES = 1; 
+
     public static void Build(OctreeNode node, List<Triangle> triangles, int maxDepth)
     {
         List<Triangle> intersecting = GetIntersectingTriangles(node.Bounds, triangles);
@@ -18,7 +20,11 @@ public class Voxelizer
 
         foreach (OctreeNode child in node.Children)
         {
-            Build(child, intersecting, maxDepth);
+            List<Triangle> childTriangles = GetIntersectingTriangles(child.Bounds, intersecting);
+            if (intersecting.Count > 0)
+            {
+                Build(child, intersecting, maxDepth);
+            }
         }
     }
 
@@ -48,10 +54,13 @@ public class Voxelizer
         if (IsCubeTooSmall(node.Bounds))
             return true;
 
+        if (node.Triangles.Count <= MIN_TRIANGLES && node.Depth > 0)
+            return true;
+
         return false;
     }
 
-    private static bool IsCubeTooSmall(Cube cube, float minSize = 1e-4f)
+    private static bool IsCubeTooSmall(Cube cube, float minSize = 1e-6f)
     {
         return cube.Width() <= minSize ||
                cube.Height() <= minSize ||
