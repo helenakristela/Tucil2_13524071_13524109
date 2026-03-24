@@ -8,7 +8,7 @@ public class Program
     {
         if (args.Length < 2)
         {
-            Console.WriteLine("Usage: dotnet run -- <input.obj> <maxDepth> [output.obj]");
+            Console.WriteLine("Usage: dotnet run -- <input.obj> <maxDepth> [output.obj] [parallel]");
             return;
         }
 
@@ -21,6 +21,7 @@ public class Program
         }
 
         string outputPath = args.Length >= 3 ? args[2] : "output.obj";
+        bool useParallel = args.Length >= 4 && args[3].ToLower() == "parallel";
 
         try
         {
@@ -32,6 +33,7 @@ public class Program
             Console.WriteLine($"File       : {inputPath}");
             Console.WriteLine($"Max Depth  : {maxDepth}");
             Console.WriteLine($"Triangles  : {triangles.Count}");
+            Console.WriteLine($"Mode       : {(useParallel ? "Parallel" : "Sequential")}");
 
             if (triangles.Count == 0)
             {
@@ -44,7 +46,14 @@ public class Program
 
             OctreeNode root = new OctreeNode(rootCube, 0);
 
-            Voxelizer.Build(root, triangles, maxDepth);
+            if (useParallel)
+            {
+                Voxelizer.BuildParallel(root, triangles, maxDepth);
+            }
+            else
+            {
+                Voxelizer.Build(root, triangles, maxDepth);
+            }
 
             List<Cube> voxels = Voxelizer.CollectLeafVoxels(root);
 
@@ -89,7 +98,7 @@ public class Program
             Console.WriteLine($"Execution Time (s) : {timer.ElapsedSeconds():F4}");
 
             Console.WriteLine();
-            Console.WriteLine($"Output OBJ saved to: {outputPath}");
+            Console.WriteLine($"Output .obj saved to: {outputPath}");
         }
         catch (Exception ex)
         {
@@ -126,7 +135,7 @@ public class Program
 
         if (maxSize < 1e-6f)
         {
-            maxSize = 1.0f; 
+            maxSize = 1.0f;
         }
 
         float padding = 1e-4f;

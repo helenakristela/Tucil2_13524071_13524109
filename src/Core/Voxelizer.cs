@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public class Voxelizer
 {
-    private const int MIN_TRIANGLES = 1; 
+    private const int MIN_TRIANGLES = 1;
+    private const int PARALLEL_DEPTH_LIMIT = 3;
 
     public static void Build(OctreeNode node, List<Triangle> triangles, int maxDepth)
     {
@@ -21,9 +23,49 @@ public class Voxelizer
         foreach (OctreeNode child in node.Children)
         {
             List<Triangle> childTriangles = GetIntersectingTriangles(child.Bounds, intersecting);
-            if (intersecting.Count > 0)
+
+            if (childTriangles.Count > 0)
             {
-                Build(child, intersecting, maxDepth);
+                Build(child, childTriangles, maxDepth);
+            }
+        }
+    }
+
+    public static void BuildParallel(OctreeNode node, List<Triangle> triangles, int maxDepth)
+    {
+        List<Triangle> intersecting = GetIntersectingTriangles(node.Bounds, triangles);
+        node.Triangles = intersecting;
+
+        if (ShouldStop(node, maxDepth))
+            return;
+
+        node.Split();
+
+        if (node.Children == null)
+            return;
+
+        if (node.Depth < PARALLEL_DEPTH_LIMIT)
+        {
+            Parallel.ForEach(node.Children, child =>
+            {
+                List<Triangle> childTriangles = GetIntersectingTriangles(child.Bounds, intersecting);
+
+                if (childTriangles.Count > 0)
+                {
+                    BuildParallel(child, childTriangles, maxDepth);
+                }
+            });
+        }
+        else
+        {
+            foreach (OctreeNode child in node.Children)
+            {
+                List<Triangle> childTriangles = GetIntersectingTriangles(child.Bounds, intersecting);
+
+                if (childTriangles.Count > 0)
+                {
+                    BuildParallel(child, childTriangles, maxDepth);
+                }
             }
         }
     }
