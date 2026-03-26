@@ -6,9 +6,17 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        if (args.Length >= 2 && args[0].ToLower() == "view")
+        {
+            ViewerApp.Run(args[1]);
+            return;
+        }
+
         if (args.Length < 2)
         {
-            Console.WriteLine("Usage: dotnet run -- <input.obj> <maxDepth> [output.obj] [parallel]");
+            Console.WriteLine("Usage:");
+            Console.WriteLine("  dotnet run -- <input.obj> <maxDepth> [output.obj] [parallel]");
+            Console.WriteLine("  dotnet run -- view <file.obj>");
             return;
         }
 
@@ -25,9 +33,6 @@ public class Program
 
         try
         {
-            Timer timer = new Timer();
-            timer.Start();
-
             List<Triangle> triangles = ObjParser.Parse(inputPath);
 
             Console.WriteLine($"File       : {inputPath}");
@@ -46,6 +51,9 @@ public class Program
 
             OctreeNode root = new OctreeNode(rootCube, 0);
 
+            Timer timer = new Timer();
+            timer.Start();
+
             if (useParallel)
             {
                 Voxelizer.BuildParallel(root, triangles, maxDepth);
@@ -57,9 +65,9 @@ public class Program
 
             List<Cube> voxels = Voxelizer.CollectLeafVoxels(root);
 
-            ObjWriter.Write(outputPath, voxels);
-
             timer.Stop();
+
+            ObjWriter.Write(outputPath, voxels);
 
             Console.WriteLine();
             Console.WriteLine("STATISTICS");
@@ -99,6 +107,9 @@ public class Program
 
             Console.WriteLine();
             Console.WriteLine($"Output .obj saved to: {outputPath}");
+
+            Console.WriteLine("\nOpening viewer...");
+            ViewerApp.Run(outputPath);
         }
         catch (Exception ex)
         {
