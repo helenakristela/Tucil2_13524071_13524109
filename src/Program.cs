@@ -103,7 +103,7 @@ public class Program
             Dictionary<int, int> occupiedLeafStats = Statistics.CountOccupiedLeavesPerDepth(root);
             foreach (var kvp in occupiedLeafStats.OrderBy(x => x.Key))
             {
-                Console.WriteLine($"Depth {kvp.Key}: {kvp.Value}");
+                Console.WriteLine($"{kvp.Key} : {kvp.Value}");
             }
 
             Console.WriteLine("\nPRUNED NODES PER DEPTH");
