@@ -63,6 +63,8 @@ public class Program
 
             OctreeNode root = new OctreeNode(rootCube, 0);
 
+            root.Triangles = triangles;
+
             Timer timer = new Timer();
             timer.Start();
 
@@ -75,10 +77,9 @@ public class Program
 
             timer.Stop();
 
-            ObjWriter.Write(outputPath, voxels);
+            var (vertexCount, faceCount) = ObjWriter.Write(outputPath, voxels);
 
             Console.WriteLine("\nSTATISTICS");
-
             Console.WriteLine($"Root Triangles        : {root.Triangles.Count}");
             Console.WriteLine($"Total Nodes           : {root.CountNodes()}");
             Console.WriteLine($"Leaf Nodes            : {root.CountLeaves()}");
@@ -87,10 +88,11 @@ public class Program
             Console.WriteLine($"Empty Leaf Nodes      : {Statistics.CountEmptyLeaves(root)}");
             Console.WriteLine($"Max Reached Depth     : {Statistics.GetMaxReachedDepth(root)}");
             Console.WriteLine($"Voxel Count           : {voxels.Count}");
+            Console.WriteLine($"Vertex Count          : {vertexCount}");
+            Console.WriteLine($"Face Count            : {faceCount}");
             Console.WriteLine($"Occupancy Ratio       : {Statistics.ComputeOccupancyRatio(root):P2}");
 
             Console.WriteLine("\nNODES PER DEPTH");
-
             Dictionary<int, int> stats = root.CountNodesPerDepth();
             foreach (var kvp in stats.OrderBy(x => x.Key))
             {
@@ -98,7 +100,6 @@ public class Program
             }
 
             Console.WriteLine("\nOCCUPIED LEAF PER DEPTH");
-
             Dictionary<int, int> occupiedLeafStats = Statistics.CountOccupiedLeavesPerDepth(root);
             foreach (var kvp in occupiedLeafStats.OrderBy(x => x.Key))
             {
@@ -106,7 +107,6 @@ public class Program
             }
 
             Console.WriteLine("\nPRUNED NODES PER DEPTH");
-
             Dictionary<int, int> prunedStats = Statistics.CountPrunedNodesPerDepth(root);
             foreach (var kvp in prunedStats.OrderBy(x => x.Key))
             {
@@ -118,7 +118,6 @@ public class Program
             Console.WriteLine($"Execution Time (s) : {timer.ElapsedSeconds():F4}");
 
             Console.WriteLine($"\nOutput .obj saved to: {outputPath}");
-
             Console.WriteLine("\nGunakan perintah berikut untuk melihat hasil:");
             Console.WriteLine($"dotnet run -- view {outputPath}");
         }
@@ -163,9 +162,7 @@ public class Program
         float maxSize = MathF.Max(sizeX, MathF.Max(sizeY, sizeZ));
 
         if (maxSize < 1e-6f)
-        {
             maxSize = 1.0f;
-        }
 
         float padding = 1e-4f;
         globalMin -= new Vector3(padding, padding, padding);
@@ -177,7 +174,11 @@ public class Program
             (globalMin.Z + globalMax.Z) / 2f
         );
 
-        Vector3 half = new Vector3(maxSize / 2f, maxSize / 2f, maxSize / 2f);
+        Vector3 half = new Vector3(
+            maxSize / 2f,
+            maxSize / 2f,
+            maxSize / 2f
+        );
 
         return new Cube(center - half, center + half);
     }

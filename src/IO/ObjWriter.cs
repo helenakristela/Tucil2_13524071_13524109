@@ -4,11 +4,12 @@ using System.IO;
 
 public static class ObjWriter
 {
-    public static void Write(string path, List<Cube> voxels)
+    public static (int vertexCount, int faceCount) Write(string path, List<Cube> voxels)
     {
         using StreamWriter writer = new StreamWriter(path);
 
         int vertexOffset = 1;
+        int faceCount = 0;
 
         HashSet<string> voxelSet = new HashSet<string>();
         foreach (var v in voxels)
@@ -30,11 +31,11 @@ public static class ObjWriter
             bool[] faceVisible = new bool[6];
 
             faceVisible[0] = !voxelSet.Contains(GetNeighborKey(cube, -size, 0, 0)); // left
-            faceVisible[1] = !voxelSet.Contains(GetNeighborKey(cube, size, 0, 0));  // right
+            faceVisible[1] = !voxelSet.Contains(GetNeighborKey(cube,  size, 0, 0)); // right
             faceVisible[2] = !voxelSet.Contains(GetNeighborKey(cube, 0, -size, 0)); // bottom
-            faceVisible[3] = !voxelSet.Contains(GetNeighborKey(cube, 0, size, 0));  // top
+            faceVisible[3] = !voxelSet.Contains(GetNeighborKey(cube, 0,  size, 0)); // top
             faceVisible[4] = !voxelSet.Contains(GetNeighborKey(cube, 0, 0, -size)); // back
-            faceVisible[5] = !voxelSet.Contains(GetNeighborKey(cube, 0, 0, size));  // front
+            faceVisible[5] = !voxelSet.Contains(GetNeighborKey(cube, 0, 0,  size)); // front
 
             int[][][] faces = new int[][][]
             {
@@ -57,11 +58,15 @@ public static class ObjWriter
                     int c = tri[2] + vertexOffset;
 
                     writer.WriteLine($"f {a} {b} {c}");
+                    faceCount++;
                 }
             }
 
             vertexOffset += 8;
         }
+
+        int vertexCount = voxels.Count * 8;
+        return (vertexCount, faceCount);
     }
 
     private static string GetKey(Cube c)
@@ -83,14 +88,14 @@ public static class ObjWriter
 
         return new List<Vector3>
         {
-            new Vector3(min.X, min.Y, min.Z), 
-            new Vector3(max.X, min.Y, min.Z), 
-            new Vector3(max.X, max.Y, min.Z), 
-            new Vector3(min.X, max.Y, min.Z), 
-            new Vector3(min.X, min.Y, max.Z), 
-            new Vector3(max.X, min.Y, max.Z), 
-            new Vector3(max.X, max.Y, max.Z), 
-            new Vector3(min.X, max.Y, max.Z)  
+            new Vector3(min.X, min.Y, min.Z),
+            new Vector3(max.X, min.Y, min.Z),
+            new Vector3(max.X, max.Y, min.Z),
+            new Vector3(min.X, max.Y, min.Z),
+            new Vector3(min.X, min.Y, max.Z),
+            new Vector3(max.X, min.Y, max.Z),
+            new Vector3(max.X, max.Y, max.Z),
+            new Vector3(min.X, max.Y, max.Z)
         };
     }
 }
