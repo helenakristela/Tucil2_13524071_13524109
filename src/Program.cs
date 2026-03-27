@@ -96,7 +96,7 @@ public class Program
             Dictionary<int, int> stats = root.CountNodesPerDepth();
             foreach (var kvp in stats.OrderBy(x => x.Key))
             {
-                Console.WriteLine($"Depth {kvp.Key}: {kvp.Value}");
+                Console.WriteLine($"{kvp.Key} : {kvp.Value}");
             }
 
             Console.WriteLine("\nOCCUPIED LEAF PER DEPTH");
@@ -110,7 +110,7 @@ public class Program
             Dictionary<int, int> prunedStats = Statistics.CountPrunedNodesPerDepth(root);
             foreach (var kvp in prunedStats.OrderBy(x => x.Key))
             {
-                Console.WriteLine($"Depth {kvp.Key}: {kvp.Value}");
+                Console.WriteLine($"{kvp.Key} : {kvp.Value}");
             }
 
             Console.WriteLine("\nPERFORMANCE");
