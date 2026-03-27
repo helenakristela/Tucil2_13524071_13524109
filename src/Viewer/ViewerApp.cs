@@ -20,7 +20,7 @@ public class ViewerApp : Form
 
     protected override void OnPaint(PaintEventArgs e)
     {
-        base.OnPaint(e);
+        e.Graphics.Clear(System.Drawing.Color.White);
         Renderer.DrawModel(e.Graphics, model, cam, this.Width, this.Height);
     }
 

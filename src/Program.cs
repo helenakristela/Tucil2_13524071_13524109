@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 
 public class Program
 {
@@ -8,19 +9,29 @@ public class Program
     {
         if (args.Length >= 2 && args[0].ToLower() == "view")
         {
+            if (!File.Exists(args[1]))
+            {
+                Console.WriteLine("Error: File viewer tidak ditemukan.");
+                return;
+            }
+
             ViewerApp.Run(args[1]);
             return;
         }
 
         if (args.Length < 2)
         {
-            Console.WriteLine("Usage:");
-            Console.WriteLine("  dotnet run -- <input.obj> <maxDepth> [output.obj] [parallel]");
-            Console.WriteLine("  dotnet run -- view <file.obj>");
+            PrintUsage();
             return;
         }
 
         string inputPath = args[0];
+
+        if (!File.Exists(inputPath))
+        {
+            Console.WriteLine("Error: File input tidak ditemukan.");
+            return;
+        }
 
         if (!int.TryParse(args[1], out int maxDepth) || maxDepth < 0)
         {
@@ -35,6 +46,7 @@ public class Program
         {
             List<Triangle> triangles = ObjParser.Parse(inputPath);
 
+            Console.WriteLine("INPUT INFO");
             Console.WriteLine($"File       : {inputPath}");
             Console.WriteLine($"Max Depth  : {maxDepth}");
             Console.WriteLine($"Triangles  : {triangles.Count}");
@@ -55,13 +67,9 @@ public class Program
             timer.Start();
 
             if (useParallel)
-            {
                 Voxelizer.BuildParallel(root, triangles, maxDepth);
-            }
             else
-            {
                 Voxelizer.Build(root, triangles, maxDepth);
-            }
 
             List<Cube> voxels = Voxelizer.CollectLeafVoxels(root);
 
@@ -69,8 +77,7 @@ public class Program
 
             ObjWriter.Write(outputPath, voxels);
 
-            Console.WriteLine();
-            Console.WriteLine("STATISTICS");
+            Console.WriteLine("\nSTATISTICS");
 
             Console.WriteLine($"Root Triangles        : {root.Triangles.Count}");
             Console.WriteLine($"Total Nodes           : {root.CountNodes()}");
@@ -82,8 +89,7 @@ public class Program
             Console.WriteLine($"Voxel Count           : {voxels.Count}");
             Console.WriteLine($"Occupancy Ratio       : {Statistics.ComputeOccupancyRatio(root):P2}");
 
-            Console.WriteLine();
-            Console.WriteLine("NODES PER DEPTH");
+            Console.WriteLine("\nNODES PER DEPTH");
 
             Dictionary<int, int> stats = root.CountNodesPerDepth();
             foreach (var kvp in stats.OrderBy(x => x.Key))
@@ -91,8 +97,7 @@ public class Program
                 Console.WriteLine($"Depth {kvp.Key}: {kvp.Value}");
             }
 
-            Console.WriteLine();
-            Console.WriteLine("OCCUPIED LEAF PER DEPTH");
+            Console.WriteLine("\nOCCUPIED LEAF PER DEPTH");
 
             Dictionary<int, int> occupiedLeafStats = Statistics.CountOccupiedLeavesPerDepth(root);
             foreach (var kvp in occupiedLeafStats.OrderBy(x => x.Key))
@@ -100,21 +105,34 @@ public class Program
                 Console.WriteLine($"Depth {kvp.Key}: {kvp.Value}");
             }
 
-            Console.WriteLine();
-            Console.WriteLine("PERFORMANCE");
+            Console.WriteLine("\nPRUNED NODES PER DEPTH");
+
+            Dictionary<int, int> prunedStats = Statistics.CountPrunedNodesPerDepth(root);
+            foreach (var kvp in prunedStats.OrderBy(x => x.Key))
+            {
+                Console.WriteLine($"Depth {kvp.Key}: {kvp.Value}");
+            }
+
+            Console.WriteLine("\nPERFORMANCE");
             Console.WriteLine($"Execution Time (ms): {timer.ElapsedMilliseconds()}");
             Console.WriteLine($"Execution Time (s) : {timer.ElapsedSeconds():F4}");
 
-            Console.WriteLine();
-            Console.WriteLine($"Output .obj saved to: {outputPath}");
+            Console.WriteLine($"\nOutput .obj saved to: {outputPath}");
 
-            Console.WriteLine("\nOpening viewer...");
-            ViewerApp.Run(outputPath);
+            Console.WriteLine("\nGunakan perintah berikut untuk melihat hasil:");
+            Console.WriteLine($"dotnet run -- view {outputPath}");
         }
         catch (Exception ex)
         {
             Console.WriteLine("Error: " + ex.Message);
         }
+    }
+
+    private static void PrintUsage()
+    {
+        Console.WriteLine("Usage:");
+        Console.WriteLine("  dotnet run -- <input.obj> <maxDepth> [output.obj] [parallel]");
+        Console.WriteLine("  dotnet run -- view <file.obj>");
     }
 
     private static Cube BuildRootCube(List<Triangle> triangles)

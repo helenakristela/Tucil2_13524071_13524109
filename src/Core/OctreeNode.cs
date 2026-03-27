@@ -8,6 +8,8 @@ public class OctreeNode
 
     public List<Triangle> Triangles { get; set; }
 
+    public bool IsPruned { get; set; } = false;
+
     public bool IsLeaf => Children == null;
 
     public OctreeNode(Cube bounds, int depth)

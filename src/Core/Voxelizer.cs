@@ -4,13 +4,18 @@ using System.Threading.Tasks;
 
 public class Voxelizer
 {
-    private const int MIN_TRIANGLES = 1;
     private const int PARALLEL_DEPTH_LIMIT = 3;
 
     public static void Build(OctreeNode node, List<Triangle> triangles, int maxDepth)
     {
         List<Triangle> intersecting = GetIntersectingTriangles(node.Bounds, triangles);
         node.Triangles = intersecting;
+
+        if (intersecting.Count == 0)
+        {
+            node.IsPruned = true;
+            return;
+        }
 
         if (ShouldStop(node, maxDepth))
             return;
@@ -35,6 +40,12 @@ public class Voxelizer
     {
         List<Triangle> intersecting = GetIntersectingTriangles(node.Bounds, triangles);
         node.Triangles = intersecting;
+
+        if (intersecting.Count == 0)
+        {
+            node.IsPruned = true;
+            return;
+        }
 
         if (ShouldStop(node, maxDepth))
             return;
@@ -94,9 +105,6 @@ public class Voxelizer
             return true;
 
         if (IsCubeTooSmall(node.Bounds))
-            return true;
-
-        if (node.Triangles.Count <= MIN_TRIANGLES && node.Depth > 0)
             return true;
 
         return false;

@@ -101,6 +101,7 @@ public static class Statistics
             }
         }
     }
+
     public static float ComputeOccupancyRatio(OctreeNode root)
     {
         int occupied = CountOccupiedLeaves(root);
@@ -108,5 +109,31 @@ public static class Statistics
 
         if (total == 0) return 0;
         return (float)occupied / total;
+    }
+
+    public static Dictionary<int, int> CountPrunedNodesPerDepth(OctreeNode node)
+    {
+        Dictionary<int, int> result = new Dictionary<int, int>();
+        FillPrunedNodes(node, result);
+        return result;
+    }
+
+    private static void FillPrunedNodes(OctreeNode node, Dictionary<int, int> stats)
+    {
+        if (node.IsPruned)
+        {
+            if (!stats.ContainsKey(node.Depth))
+                stats[node.Depth] = 0;
+
+            stats[node.Depth]++;
+        }
+
+        if (node.Children != null)
+        {
+            foreach (OctreeNode child in node.Children)
+            {
+                FillPrunedNodes(child, stats);
+            }
+        }
     }
 }

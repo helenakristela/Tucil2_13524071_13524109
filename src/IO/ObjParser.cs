@@ -14,6 +14,7 @@ public class ObjParser
         var triangles = new List<Triangle>(8192);
 
         int invalidVertexCount = 0;
+        int invalidFaceCount = 0;
 
         foreach (var line in File.ReadLines(path))
         {
@@ -32,7 +33,8 @@ public class ObjParser
                     break;
 
                 case "f":
-                    ParseFace(parts, vertices, triangles);
+                    if (!ParseFace(parts, vertices, triangles))
+                        invalidFaceCount++;
                     break;
 
                 default:
@@ -43,6 +45,11 @@ public class ObjParser
         if (invalidVertexCount > 0)
         {
             Console.WriteLine($"Warning: {invalidVertexCount} invalid vertex skipped");
+        }
+
+        if (invalidFaceCount > 0)
+        {
+            Console.WriteLine($"Warning: {invalidFaceCount} invalid/unsupported faces skipped");
         }
 
         if (vertices.Count == 0)
@@ -74,25 +81,37 @@ public class ObjParser
         vertices.Add(new Vector3(x, y, z));
     }
 
-    private static void ParseFace(string[] parts, List<Vector3> vertices, List<Triangle> triangles)
+    private static bool ParseFace(string[] parts, List<Vector3> vertices, List<Triangle> triangles)
     {
-        if (parts.Length != 4) return;
+        if (parts.Length != 4)
+        {
+            Console.WriteLine("Warning: non-triangle face ignored");
+            return false;
+        }
 
         if (!TryParseIndex(parts[1], vertices.Count, out int i1) ||
             !TryParseIndex(parts[2], vertices.Count, out int i2) ||
             !TryParseIndex(parts[3], vertices.Count, out int i3))
-            return;
+        {
+            Console.WriteLine("Warning: invalid face index");
+            return false;
+        }
 
         if (!IsValidIndex(i1, vertices.Count) ||
             !IsValidIndex(i2, vertices.Count) ||
             !IsValidIndex(i3, vertices.Count))
-            return;
+        {
+            Console.WriteLine("Warning: face index out of bounds");
+            return false;
+        }
 
         triangles.Add(new Triangle(
             vertices[i1],
             vertices[i2],
             vertices[i3]
         ));
+
+        return true;
     }
 
     private static bool TryParseIndex(string token, int vertexCount, out int index)
@@ -105,19 +124,10 @@ public class ObjParser
         if (!int.TryParse(split[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int rawIndex))
             return false;
 
-        if (rawIndex > 0)
-        {
-            index = rawIndex - 1;
-        }
-        else if (rawIndex < 0)
-        {
-            index = vertexCount + rawIndex;
-        }
-        else
-        {
+        if (rawIndex <= 0)
             return false;
-        }
 
+        index = rawIndex - 1;
         return true;
     }
 

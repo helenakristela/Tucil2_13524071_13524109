@@ -10,6 +10,12 @@ public static class ObjWriter
 
         int vertexOffset = 1;
 
+        HashSet<string> voxelSet = new HashSet<string>();
+        foreach (var v in voxels)
+        {
+            voxelSet.Add(GetKey(v));
+        }
+
         foreach (Cube cube in voxels)
         {
             List<Vector3> vertices = GetCubeVertices(cube);
@@ -19,27 +25,55 @@ public static class ObjWriter
                 writer.WriteLine($"v {v.X} {v.Y} {v.Z}");
             }
 
-            int[,] faces = new int[,]
+            float size = cube.Width();
+
+            bool[] faceVisible = new bool[6];
+
+            faceVisible[0] = !voxelSet.Contains(GetNeighborKey(cube, -size, 0, 0)); // left
+            faceVisible[1] = !voxelSet.Contains(GetNeighborKey(cube, size, 0, 0));  // right
+            faceVisible[2] = !voxelSet.Contains(GetNeighborKey(cube, 0, -size, 0)); // bottom
+            faceVisible[3] = !voxelSet.Contains(GetNeighborKey(cube, 0, size, 0));  // top
+            faceVisible[4] = !voxelSet.Contains(GetNeighborKey(cube, 0, 0, -size)); // back
+            faceVisible[5] = !voxelSet.Contains(GetNeighborKey(cube, 0, 0, size));  // front
+
+            int[][][] faces = new int[][][]
             {
-                {0,1,2}, {0,2,3}, 
-                {4,5,6}, {4,6,7}, 
-                {0,1,5}, {0,5,4}, 
-                {2,3,7}, {2,7,6}, 
-                {1,2,6}, {1,6,5}, 
-                {0,3,7}, {0,7,4}  
+                new int[][] { new int[]{0,3,7}, new int[]{0,7,4} }, // left
+                new int[][] { new int[]{1,2,6}, new int[]{1,6,5} }, // right
+                new int[][] { new int[]{0,1,5}, new int[]{0,5,4} }, // bottom
+                new int[][] { new int[]{2,3,7}, new int[]{2,7,6} }, // top
+                new int[][] { new int[]{0,1,2}, new int[]{0,2,3} }, // back
+                new int[][] { new int[]{4,5,6}, new int[]{4,6,7} }  // front
             };
 
-            for (int i = 0; i < faces.GetLength(0); i++)
+            for (int f = 0; f < 6; f++)
             {
-                int a = faces[i, 0] + vertexOffset;
-                int b = faces[i, 1] + vertexOffset;
-                int c = faces[i, 2] + vertexOffset;
+                if (!faceVisible[f]) continue;
 
-                writer.WriteLine($"f {a} {b} {c}");
+                foreach (var tri in faces[f])
+                {
+                    int a = tri[0] + vertexOffset;
+                    int b = tri[1] + vertexOffset;
+                    int c = tri[2] + vertexOffset;
+
+                    writer.WriteLine($"f {a} {b} {c}");
+                }
             }
 
             vertexOffset += 8;
         }
+    }
+
+    private static string GetKey(Cube c)
+    {
+        var center = c.Center();
+        return $"{center.X:F6}_{center.Y:F6}_{center.Z:F6}";
+    }
+
+    private static string GetNeighborKey(Cube c, float dx, float dy, float dz)
+    {
+        var center = c.Center();
+        return $"{(center.X + dx):F6}_{(center.Y + dy):F6}_{(center.Z + dz):F6}";
     }
 
     private static List<Vector3> GetCubeVertices(Cube c)
