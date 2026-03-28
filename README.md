@@ -54,7 +54,7 @@ dotnet run -- ../test/input/cat.obj 8 ..test/output/cat_output.obj parallel
 
 ### Viewer
 ```bash
-dotnet run -- view cat_output.obj     
+dotnet run -- view ../test/output/cat_output.obj    
 ```
 
 ## Catatan
