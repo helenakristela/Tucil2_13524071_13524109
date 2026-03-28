@@ -13,8 +13,9 @@ public class ViewerApp : Form
         this.Height = 600;
         this.DoubleBuffered = true;
 
-        model = ObjLoaderViewer.Load(path);
+        this.KeyPreview = true;
 
+        model = ObjLoaderViewer.Load(path);
         this.KeyDown += OnKeyDown;
     }
 

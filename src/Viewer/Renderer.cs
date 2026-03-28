@@ -17,9 +17,9 @@ public static class Renderer
             Vector3 edge2 = v3 - v1;
             Vector3 normal = edge1.Cross(edge2);
 
-            Vector3 viewDir = new Vector3(0, 0, 1);
-            if (normal.Dot(viewDir) >= 0)
-                continue;
+            // Vector3 viewDir = new Vector3(0, 0, 1);
+            // if (normal.Dot(viewDir) >= 0)
+                // continue;
 
             var p1 = Projection.Project(v1, width, height);
             var p2 = Projection.Project(v2, width, height);

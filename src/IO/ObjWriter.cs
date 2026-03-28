@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Globalization;
 
 public static class ObjWriter
 {
@@ -23,7 +24,11 @@ public static class ObjWriter
 
             foreach (var v in vertices)
             {
-                writer.WriteLine($"v {v.X} {v.Y} {v.Z}");
+                writer.WriteLine(string.Format(
+                    CultureInfo.InvariantCulture,
+                    "v {0} {1} {2}",
+                    v.X, v.Y, v.Z
+                ));
             }
 
             float size = cube.Width();
@@ -72,13 +77,23 @@ public static class ObjWriter
     private static string GetKey(Cube c)
     {
         var center = c.Center();
-        return $"{center.X:F6}_{center.Y:F6}_{center.Z:F6}";
+        return string.Format(
+            CultureInfo.InvariantCulture,
+            "{0:F6}_{1:F6}_{2:F6}",
+            center.X, center.Y, center.Z
+        );
     }
 
     private static string GetNeighborKey(Cube c, float dx, float dy, float dz)
     {
         var center = c.Center();
-        return $"{(center.X + dx):F6}_{(center.Y + dy):F6}_{(center.Z + dz):F6}";
+        return string.Format(
+            CultureInfo.InvariantCulture,
+            "{0:F6}_{1:F6}_{2:F6}",
+            center.X + dx,
+            center.Y + dy,
+            center.Z + dz
+        );
     }
 
     private static List<Vector3> GetCubeVertices(Cube c)

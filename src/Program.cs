@@ -2,11 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Globalization;
 
 public class Program
 {
     public static void Main(string[] args)
     {
+        CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+        CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+
         if (args.Length >= 2 && args[0].ToLower() == "view")
         {
             if (!File.Exists(args[1]))
@@ -62,7 +66,6 @@ public class Program
             Console.WriteLine($"Root Cube  : {rootCube}");
 
             OctreeNode root = new OctreeNode(rootCube, 0);
-
             root.Triangles = triangles;
 
             Timer timer = new Timer();
